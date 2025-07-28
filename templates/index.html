@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API</title>
+    <link rel="stylesheet" href="styles/styles.css">
+</head>
+<body>
+    <div class="page">
+        <form action="http://127.0.0.1:5000/receber-dados" method="post" class="formLogin">
+            <p>Register</p>
+            <label>Name:</label>
+            <input type="text" name="name" required><br>
+            <label>Email:</label>
+            <input type="email" name="email" required><br>
+            <label>Password:</label>
+            <input type="password" name="password" minlength="8" required><br>
+            <label>Confirm Password:</label>
+            <input type="password" name="confirmPassword" minlength="8" required>
+            <input type="submit" value="SUBMIT">
+            <p><a href="login.html">Do you have an account? Click Here</a></p>
+        </form>
+    </div>
+</body>
+</html>
