@@ -4,21 +4,98 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login</title>
-    <link rel="stylesheet" href="styles/styles.css">
+    <link rel="stylesheet" href="../styles/styles.css">
+    <style>
+        #mensagem {
+            margin-top: 15px;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: bold;
+            display: inline-block;
+            max-width: 100%;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+            border: 1px solid #f5c6cb;
+            display: none; /* começa invisível */
+        }
+        #mensagem.sucesso {
+            background-color: #d4edda;      
+            border: 1px solid #c3e6cb;
+            display: inline-block;
+        }
+        #mensagem.erro {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            display: inline-block;
+        }
+    </style>
+
 </head>
 <body>
     <div class="page">
 
         <form action="http://127.0.0.1:5000/login"
-        method="post" class="formLogin">
-            <p>LOGIN</p>
+        method="post" class="formLogin" id="formLogin">
+        <p>LOGIN</p>
+        <div id="mensagem"></div>
             <label>Email:</label>
             <input type="email" name="email" required><br>
             <label>Password:</label>
             <input type="password" name="password" minlength="8" required><br>
             <input type="submit" value="SUBMIT">
             <p><a href="index.html">Don't you have an account? Click Here</a></p>
+            <p><a href="recoverpass.html"</a>
+            Recover Password. Click Here</p>
         </form>
     </div>
+
+
+     <script>
+        const form = document.getElementById('formLogin');
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const formData = new FormData(form);
+            const data = new URLSearchParams(formData);
+            const mensagemDiv = document.getElementById('mensagem');
+            mensagemDiv.textContent = ''; // limpa mensagens antigas
+            mensagemDiv.classList.remove('sucesso', 'erro');
+            mensagemDiv.style.display = 'none';
+
+            try{
+                const res = await fetch('http://127.0.0.1:5000/login', {
+                    method: 'POST',
+                    body: data
+                });
+    
+                const json = await res.json();
+    
+               
+                
+                if (res.ok) {
+                    mensagemDiv.style.color = 'green';
+                    mensagemDiv.textContent = json.sucesso || 'Login realizado com sucesso!';
+                    mensagemDiv.classList.add('sucesso');
+                    mensagemDiv.style.display = 'inline-block';
+                    localStorage.setItem('token', json.token);
+                    // Redirecionar para página protegida
+                    setTimeout(() => {
+                        window.location.href = 'protected.html';
+                    }, 1000);
+                } else {
+                    mensagemDiv.style.color = 'red';
+                    mensagemDiv.textContent = json.erro || 'Erro desconhecido';
+                    mensagemDiv.classList.add('erro');
+                    mensagemDiv.style.display = 'inline-block';
+                }
+            }catch(error){
+                mensagemDiv.style.color = 'red';
+                mensagemDiv.textContent = 'Erro de conexão com o servidor';
+                mensagemDiv.classList.add('erro');
+                mensagemDiv.style.display = 'inline-block';
+            }
+
+        });
+    </script>
 </body>
 </html>

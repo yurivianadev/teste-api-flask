@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles/styles.css') }}">
+</head>
+<body>
+    <div class="page">
+
+        <form action="{{ url_for('redefinir_senha_com_token', token=token, email=email) }}" method="POST" class="formLogin" id="formLogin">
+            <p>RECOVER PASSWORD</p>
+            <label for="new_password">New Password:</label>
+            <input type="password" name="new_password" minlength="8" required><br>
+            <label for="confirm_newPassword">Confirm New Password:</label>
+            <input type="password" name="confirm_newPassword" minlength="8" required><br>
+            
+            <input type="submit" value="SUBMIT">
+        </form>
+    </div>
+     
+</body>
+</html>
