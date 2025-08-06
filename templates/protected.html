@@ -3,7 +3,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Página Protegida</title>
+  <title>Page Protected</title>
 </head>
 <body>
   <h1>Página Protegida</h1>
@@ -11,20 +11,28 @@
 
   <script>
     const token = localStorage.getItem('token');
+    console.log('Token armazenado:', token);
 
-    fetch('http://127.0.0.1:5000/protected', {
+    fetch('/protected', {
+      method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`
       }
     })
-    .then(res => res.json())
+    .then(res => {
+      console.log('Status da resposta:', res.status);
+      if (!res.ok) throw new Error('Não autorizado');
+      return res.json();
+    })
     .then(data => {
-    document.getElementById('conteudo').textContent = data.mensagem;
+      document.getElementById('conteudo').textContent = data.mensagem;
     })
     .catch(err => {
+      console.error('Erro:', err);
       alert('Acesso negado. Faça login novamente.');
-      window.location.href = 'login.html';
+      window.location.href = '/login';
     });
-  </script>
+</script>
+
 </body>
 </html>

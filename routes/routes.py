@@ -1,8 +1,9 @@
-from flask import request, render_template, jsonify
+from flask import request, render_template, jsonify, flash, url_for
 import secrets
 import bcrypt
 from datetime import datetime, timedelta
 from auth.jwt_utils import gerar_token, token_required
+from forms.forms import LoginForm, RegisterForm, RecoverPassForm, RedefinirSenhaForm
 
 from crud.mysqlConnector import (
     salvar_dados,
@@ -20,73 +21,107 @@ def init_routes(app):
     SECRET_KEY = app.config['SECRET_KEY']
     @app.route('/')
     def form():
-        return render_template('index.html')
+        return render_template('index.html', form=RegisterForm())
 
-    @app.route('/receber-dados', methods=['POST'])
+    
+        
+    @app.route('/cadastrar', methods=['GET', 'POST'])
     def cadastrar_dados():
-        name = request.form['name']
-        email = request.form['email']
-        password = request.form['password']
-        confirmPassword = request.form['confirmPassword']
-        token = secrets.token_urlsafe(16)
+        form = RegisterForm()
+        if form.validate_on_submit():
+            name = form.name.data
+            email = form.email.data
+            password = form.password.data
+            confirmPassword = form.confirmPassword.data
+            token = secrets.token_urlsafe(16)
 
-        if password != confirmPassword:
-            return jsonify({'ERRO': 'Senhas estão diferentes'})
+            if password != confirmPassword:
+                return jsonify({'ERRO': 'Senhas estão diferentes'})
 
-        hash_bytes = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
-        hash_str = hash_bytes.decode('utf-8')
+            hash_bytes = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+            hash_str = hash_bytes.decode('utf-8')
 
-        if buscar_usuario_por_email(email) is None:
-            salvar_dados(name, email, hash_str, token, 0)
-            enviar_email_verificacao(email, token)
-            return 'Conta registrada com sucesso, ative pelo email'
+            if buscar_usuario_por_email(email) is None:
+                salvar_dados(name, email, hash_str, token, 0)
+                enviar_email_verificacao(email, token)
+                return 'Conta registrada com sucesso, ative pelo email'
 
-        return "Mensagem: Email já foi cadastrado"
+            return "Mensagem: Email já foi cadastrado"
+        # Se for GET, exibe o formulário de cadastro
+        return render_template('index.html', form=form)
 
     @app.route('/verificar-email/<token>/<email>')
     def verificar_email(token, email):
         if not verificar_token(token):
             return 'Usuário não encontrado ou token inválido'
 
-        return 'Email cadastrado com sucesso. Faça login <a href="http://127.0.0.1:5500/templates/login.html">aqui</a>'
+        return f'Email cadastrado com sucesso. Faça login <a href="{url_for("login")}">aqui</a>'
 
-    @app.route('/login', methods=['POST'])
+    @app.route('/login', methods=['GET', 'POST'])
     def login():
-        email = request.form['email']
+        form = LoginForm()
+        """ email = request.form['email']
         password = request.form['password']
-        resultado = login_usuario(email, password)
+        resultado = login_usuario(email, password) """
     
-        print(resultado)
+        if form.validate_on_submit():
+            email = form.email.data
+            password = form.password.data
+            resultado = login_usuario(email, password)
+            if resultado.get('status') == 'sucesso':
+                token = gerar_token({'email': email})
+                flash('Login bem-sucedido', 'success')
+                return redirect(url_for('rota_protegida'))
+            else:
+                flash('Email ou senha inválidos', 'danger')
+        return render_template('login.html', form=form)           
+
+    @app.route('/api/login', methods=['POST'])
+    def api_login():
+        email = request.form.get('email')
+        password = request.form.get('password')
+
+        resultado = login_usuario(email, password)
+
         if resultado.get('status') == 'sucesso':
             token = gerar_token({'email': email})
-            return jsonify({'mensagem': 'Login bem-sucedido', 'token': token})
+            return jsonify({'sucesso': 'Login bem-sucedido', 'token': token})
         else:
             return jsonify({'erro': 'Email ou senha inválidos'}), 401
-            
+
+    @app.route('/pagina-protegida')
+    def pagina_protegida():
+        return render_template('protected.html')
+
     @app.route('/protected')
     @token_required
     def rota_protegida(dados_token):
         email = dados_token.get('email')
         return jsonify({'mensagem': f'Bem-vindo(a), {email}!'})
 
+    
 
 
-
-    @app.route('/recuperar-senha', methods=['POST'])
+    @app.route('/recuperar-senha', methods=['POST', 'GET'])
     def solicitar_recuperacao_senha():
-        email = request.form.get('email')
-        usuario = buscar_usuario_por_email(email)
-        if not usuario:
-            return jsonify({'erro': 'Email não cadastrado'}), 404
+        form = RecoverPassForm()
+        if form.validate_on_submit():
+            email = form.email.data
+            if not email:
+                return jsonify({'erro': 'Email Obrigatório'}), 400
+            usuario = buscar_usuario_por_email(email)
+            if not usuario:
+                return jsonify({'erro': 'Email não cadastrado'}), 404
 
-        token = secrets.token_urlsafe(20)
-        expiracao = datetime.utcnow() + timedelta(hours=1)
+            token = secrets.token_urlsafe(20)
+            expiracao = datetime.utcnow() + timedelta(hours=1)
 
-        salvar_token_reset_senha(email, token, expiracao)  # função que você cria para salvar token+expiração
+            salvar_token_reset_senha(email, token, expiracao)  # função que você cria para salvar token+expiração
 
-        enviar_email_reset_senha(email, token)  # envia link com token no email
+            enviar_email_reset_senha(email, token)  # envia link com token no email
 
-        return jsonify({'mensagem': 'Email enviado para recuperação de senha.'})
+            return jsonify({'mensagem': 'Email enviado para recuperação de senha.'})
+        return render_template('recoverpass.html', form=form)
 
     @app.route('/recuperar-senha/<token>/<email>', methods=['POST', 'GET'])
     def redefinir_senha_com_token(token, email):
@@ -96,9 +131,11 @@ def init_routes(app):
         if resultado == 'expirado':
             return jsonify({'erro': 'Token expirado'}), 400
 
-        if request.method == 'POST':
-            new_password = request.form.get('new_password')
-            confirm_newPassword = request.form.get('confirm_newPassword')
+
+        form = RedefinirSenhaForm()
+        if form.validate_on_submit():
+            new_password = form.new_password.data
+            confirm_newPassword = form.confirm_newPassword.data
 
             if not new_password or not confirm_newPassword:
                 return jsonify({'erro': 'Preencha todos os campos'}), 400
@@ -111,4 +148,4 @@ def init_routes(app):
             update_password(hash_str, email)
             return jsonify({'mensagem': 'Senha redefinida com sucesso!'})
         print(token, email)
-        return render_template('recoverpassConfirm.html', token=token, email=email)
+        return render_template('recoverpassConfirm.html', form=form, token=token, email=email)
