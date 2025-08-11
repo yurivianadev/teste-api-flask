@@ -3,18 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login</title>
-    <link rel="stylesheet" href="../styles/styles.css">
+    <title>Recover Password<title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles/styles1.css') }}">
 </head>
 <body>
     <div class="page">
 
-        <form action="http://127.0.0.1:5000/recuperar-senha"
-        method="post" class="formLogin" id="formLogin">
+        <form action="{{ url_for('solicitar_recuperacao_senha') }}" method="post" class="formLogin" id="formLogin">
+            {{ form.hidden_tag() }}
             <p>RECOVER PASSWORD</p>
             <label>Email:</label>
-            <input type="email" name="email" required><br>
-            <input type="submit" value="SUBMIT">
+            {{ form.email(size=32) }}<br>
+            {{ form.submit() }}
         </form>
     </div>
      

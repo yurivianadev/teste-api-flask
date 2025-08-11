@@ -3,23 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>API</title>
-    <link rel="stylesheet" href="../styles/styles.css">
+    <title>Register</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles/styles1.css') }}">
 </head>
 <body>
     <div class="page">
-        <form action="http://127.0.0.1:5000/receber-dados" method="post" class="formLogin">
+         <form action="{{ url_for('cadastrar_dados') }}" method="post" class="formLogin">
+            {{ form.hidden_tag() }}
             <p>Register</p>
             <label>Name:</label>
-            <input type="text" name="name" required><br>
+            {{ form.name(size=32) }}<br>
             <label>Email:</label>
-            <input type="email" name="email" required><br>
+            {{ form.email(size=32) }}<br>
             <label>Password:</label>
-            <input type="password" name="password" minlength="8" required><br>
+            {{ form.password(size=32) }}<br>
             <label>Confirm Password:</label>
-            <input type="password" name="confirmPassword" minlength="8" required>
-            <input type="submit" value="SUBMIT">
-            <p><a href="login.html">Do you have an account? Click Here</a></p>
+            {{ form.confirmPassword(size=32) }}<br>
+            {{ form.submit() }}
+            <p><a href="{{ url_for('login') }}">Do you have an account? Click Here</a></p>
         </form>
     </div>
 </body>

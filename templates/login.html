@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login</title>
-    <link rel="stylesheet" href="../styles/styles.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles/styles1.css') }}">
     <style>
         #mensagem {
             margin-top: 15px;
@@ -34,20 +34,41 @@
 <body>
     <div class="page">
 
-        <form action="http://127.0.0.1:5000/login"
+        <form action="{{ url_for('login') }}"
         method="post" class="formLogin" id="formLogin">
-        <p>LOGIN</p>
-        <div id="mensagem"></div>
-            <label>Email:</label>
-            <input type="email" name="email" required><br>
-            <label>Password:</label>
-            <input type="password" name="password" minlength="8" required><br>
-            <input type="submit" value="SUBMIT">
-            <p><a href="index.html">Don't you have an account? Click Here</a></p>
-            <p><a href="recoverpass.html"</a>
-            Recover Password. Click Here</p>
+            <div id="mensagem"></div>
+            {{ form.hidden_tag() }} 
+            <label for="email">Email</label>
+            {{ form.email(size=32) }}<br>
+
+            <label for="password">Senha</label>
+            {{ form.password(size=32) }}<br>
+
+            {{ form.submit() }}
+            <!-- <p>LOGIN</p>
+            <div id="mensagem"></div>
+                <label>Email:</label>
+                <input type="email" name="email" required><br>
+                <label>Password:</label>
+                <input type="password" name="password" minlength="8" required><br>
+                <input type="submit" value="SUBMIT">-->
+                <p><a href="{{ url_for('cadastrar_dados') }}">Don't you have an account? Click Here</a></p>
+                <p><a href="{{ url_for('solicitar_recuperacao_senha') }}">
+                    Recover Password. Click Here
+                </a>
+                </p> 
         </form>
     </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <ul>
+            {% for category, message in messages %}
+                <li class="alert alert-{{ category }}">{{ message }}</li>
+            {% endfor %}
+            </ul>
+        {% endif %}
+    {% endwith %}
 
 
      <script>
@@ -63,7 +84,7 @@
             mensagemDiv.style.display = 'none';
 
             try{
-                const res = await fetch('http://127.0.0.1:5000/login', {
+                const res = await fetch('http://127.0.0.1:5000/api/login', {
                     method: 'POST',
                     body: data
                 });
@@ -80,7 +101,7 @@
                     localStorage.setItem('token', json.token);
                     // Redirecionar para página protegida
                     setTimeout(() => {
-                        window.location.href = 'protected.html';
+                        window.location.href = '/pagina-protegida';
                     }, 1000);
                 } else {
                     mensagemDiv.style.color = 'red';
